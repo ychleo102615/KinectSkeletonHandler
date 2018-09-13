@@ -9,6 +9,8 @@ vector<MySkeleton> skeletonBuffer;
 deque<float> frameDistances;
 #define BUFFER_MAX 10
 
+
+
 int oddTable[] = {1, 1, 2, 4, 5, 6, 7, 8};
 int evenTable[] = {0, 1, 2, 4, 5, 6, 7, 8};
 
@@ -82,8 +84,8 @@ void ofApp::update(){
     // stock distance each frame
     stockDistances();
 
-    movementAmount = ofLerp(movementAmount, getMovementAmount(frameDistances), 0.5) ;
-    handMovementAmount = ofLerp(handMovementAmount, getHandMovement(), 0.5);
+//    movementAmount = ofLerp(movementAmount, getMovementAmount(frameDistances), 0.5) ;
+//    handMovementAmount = ofLerp(handMovementAmount, getHandMovement(), 0.5);
     
     // stock previous skeleton
     skeletonBuffer.push_back(ms1);
@@ -119,15 +121,15 @@ void ofApp::update(){
     ofxOscMessage m2;
     m2.setAddress("/discrete");
     
-    discreteNumber = ms1.getBodyDiscreteExtent();
-    stretchNumber = ms1.getBodyStretchExtent();
+//    discreteNumber = ms1.getBodyDiscreteExtent();
+//    stretchNumber = ms1.getBodyStretchExtent();
     
     if(discreteNumber < minDis && discreteNumber != 0)
         minDis = discreteNumber;
     if(discreteNumber > maxDis)
         maxDis = discreteNumber;
     
-    float discreteLevel = ofMap(discreteNumber, 100, 1000, 0, scaleNumber);
+    float discreteLevel=0;// = ofMap(discreteNumber, 100, 1000, 0, scaleNumber, true);
     cout << "Discrete level: " << discreteLevel << endl;
     if(discreteLevel<0)
         discreteLevel = 0;
@@ -151,22 +153,23 @@ void ofApp::update(){
     hands_volume = ms1.twoHandsPositioningMethod("vertical", "left");
     hands_range = ms1.twoHandsPositioningMethod("horizontal", "left");
     hands_density = ms1.twoHandsPositioningMethod("vertical", "right");
-    hands_density = densityShiftedByPhase(hands_density);
+//    hands_density = densityShiftedByPhase(hands_density);
     hands_pause = ms1.twoHandsPositioningMethod("horizontal", "right");
     
     mHandsPos.addIntArg(hands_volume);
     mHandsPos.addIntArg(hands_range);
-    mHandsPos.addIntArg(hands_pause);
     mHandsPos.addIntArg(hands_density);
-    mHandsPos.addFloatArg(hands_density);
+    mHandsPos.addIntArg(hands_pause);
+//    mHandsPos.addFloatArg(hands_density);
     sender.sendMessage(mHandsPos);
     
     
     // near every 2 seconds get one string of ANGER type
-    if(ofGetFrameNum() % 70 == 0) {
+    if(ofGetFrameNum() % 80 == 0) {
         ofxOscMessage m4;
         m4.setAddress("/angerlist");
 //        m4.addStringArg(getAngryBeatsList((int)movementAmountConverted));
+        hands_density = densityShiftedByPhase(hands_density);
         m4.addStringArg(getAngryBeatsList(hands_density));
         sender.sendMessage(m4);
     }
@@ -222,10 +225,10 @@ void ofApp::draw(){
         
         gui.draw();
         
-        ofDrawBitmapString(ms1.twoHandsPositioningMethod("vertical", "left"), 160, 10);
-        ofDrawBitmapString(ms1.twoHandsPositioningMethod("horizontal", "left"), 160, 30);
-        ofDrawBitmapString(ms1.twoHandsPositioningMethod("vertical", "right"), 160, 50);
-        ofDrawBitmapString(densityShiftedByPhase(ms1.twoHandsPositioningMethod("horizontal", "right")), 160, 70);
+        ofDrawBitmapString(/*ms1.twoHandsPositioningMethod("vertical", "left")*/hands_volume, 160, 10);
+        ofDrawBitmapString(/*ms1.twoHandsPositioningMethod("horizontal", "left")*/hands_range, 160, 30);
+        ofDrawBitmapString(/*ms1.twoHandsPositioningMethod("vertical", "right")*/hands_density, 160, 50);
+        ofDrawBitmapString(/*densityShiftedByPhase(ms1.twoHandsPositioningMethod("horizontal", "right"))*/hands_pause, 160, 70);
     }
     
 }
@@ -392,14 +395,17 @@ string ofApp::getAngryBeatsList(int density) {
     int oddNum = oddTable[density];
     int evenNum = evenTable[density];
     
+    /*
     vector<int> choseOdd;
     vector<int> choseEven;
     for(int i=0;i<8;i++){
         choseOdd.push_back(i);
         choseEven.push_back(i);
     }
+     */
     
     string angryBeatsList;
+    /*
     int angryBeatsScript[16];
     for(int i=0;i<16;i++){
         angryBeatsScript[i] = 0;
@@ -425,6 +431,21 @@ string ofApp::getAngryBeatsList(int density) {
         //cout << angryBeatsScript[i] << endl;
         angryBeatsList = angryBeatsList + to_string(angryBeatsScript[i]) + " ";
     }
+    */
+    
+    for(int i=0;i<8;i++){
+        int n;
+        if(ofRandom(8)+1 <= oddNum)
+            n = 1;
+        else
+            n = 0;
+        angryBeatsList = angryBeatsList + to_string(n) + " ";
+        if(ofRandom(8)+1 <= evenNum)
+            n = 1;
+        else
+            n = 0;
+        angryBeatsList = angryBeatsList + to_string(n) + " ";
+    }
     
     return angryBeatsList;
     
@@ -439,8 +460,11 @@ int ofApp::phaseHandler(int recordCounter){
     else if(recordCounter < twoMinutesCount){
         phase = 1;
     }
-    else{
+    else if(recordCounter < endCount){
         phase = 2;
+    }
+    else{
+        phase = 3;
     }
     
     return phase;
@@ -460,6 +484,10 @@ int ofApp::densityShiftedByPhase(int density){
     }
     else if(phase == 2){
         lowbound = 4;
+        upbound = 8;
+    }
+    else{
+        lowbound = 0;
         upbound = 8;
     }
     

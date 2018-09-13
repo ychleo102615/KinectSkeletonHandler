@@ -5,6 +5,7 @@
 #include "ofxPubSubOsc.h"
 #include "ofxGui.h"
 #include "MySkeleton.hpp"
+#include "Ripple.hpp"
 
 class ofApp : public ofBaseApp{
 
@@ -61,6 +62,7 @@ class ofApp : public ofBaseApp{
     int replayFrameCounter;
     const int oneMinutesCount = 2400;
     const int twoMinutesCount = 4800;
+    const int endCount = 8000;
     vector<MySkeleton> trail;
     
     int hands_volume;

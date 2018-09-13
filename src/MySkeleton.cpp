@@ -295,7 +295,7 @@ float MySkeleton::twoHandsPositioningMethod(string direction, string side){
     int hand, shoulder;
     
     if(direction == "vertical" && side == "left"){
-        lowerBound = 5;
+        lowerBound = 100;
         upperBound = 0;
         hand = HandLeft;
         shoulder = ShoulderLeft;
@@ -313,8 +313,8 @@ float MySkeleton::twoHandsPositioningMethod(string direction, string side){
         shoulder = ShoulderRight;
     }
     else if(direction == "horizontal" && side == "right"){
-        lowerBound = 0;
-        upperBound = 4;
+        lowerBound = 4;
+        upperBound = 0;
         hand = HandRight;
         shoulder = ShoulderRight;
     }
