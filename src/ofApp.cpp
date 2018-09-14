@@ -6,6 +6,8 @@
 MySkeleton ms1;
 MySkeleton lastMs;
 vector<MySkeleton> skeletonBuffer;
+vector<Ripple> rippleHandler;
+
 deque<float> frameDistances;
 #define BUFFER_MAX 10
 
@@ -50,6 +52,11 @@ void ofApp::setup(){
     hands_range = 0;
     hands_density = 0;
     hands_pause = 0;
+    
+//    Ripple a(ofVec2f(0,0));
+//    a.setCircleSpeedByEmotion(0);
+    Ripple::setCircleSpeedByEmotion(0);
+    
 }
 
 //--------------------------------------------------------------
@@ -106,8 +113,26 @@ void ofApp::update(){
         
         if(m.getAddress() == "/melodyBeat"){
 //            string msg = m.getArgAsString(0);
-            int msg = m.getArgAsInt32(0);
-            cout << "This sholud be bang: " << msg << endl << "--------------------------------------------------------------\n";
+            
+            int oscArgumentNum = m.getNumArgs();
+            if(oscArgumentNum > 0){
+                int msg = m.getArgAsInt32(0);
+                cout << "This sholud be bang: " << msg << endl << "--------------------------------------------------------------\n";
+                
+                Ripple lh(ms1.node[MySkeleton::HandLeft], "left");
+                Ripple rh(ms1.node[MySkeleton::HandRight], "right");
+                rippleHandler.push_back(lh);
+                rippleHandler.push_back(rh);
+            }
+            
+        }
+        
+        if(m.getAddress() == "/emotions"){
+            int oscArgumentNum = m.getNumArgs();
+            if(oscArgumentNum > 0){
+                int v = m.getArgAsInt32(0);
+                Ripple::setCircleSpeedByEmotion(v);
+            }
         }
     }
     
@@ -197,8 +222,21 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
     
-    if(showingSkeleton)
+    if(showingSkeleton){
+        ofFill();
         showSkeleton();
+        
+        for(int i=0;i<rippleHandler.size();i++){
+            rippleHandler[i].checkLife();
+            if(rippleHandler[i].isEnd()){
+                rippleHandler.erase(rippleHandler.begin() + i);
+                continue;
+            }
+            rippleHandler[i].drawRipple();
+        }
+        
+    }
+    
     ofSetColor(255);
     
     if(showingDatas){
@@ -229,6 +267,11 @@ void ofApp::draw(){
         ofDrawBitmapString(/*ms1.twoHandsPositioningMethod("horizontal", "left")*/hands_range, 160, 30);
         ofDrawBitmapString(/*ms1.twoHandsPositioningMethod("vertical", "right")*/hands_density, 160, 50);
         ofDrawBitmapString(/*densityShiftedByPhase(ms1.twoHandsPositioningMethod("horizontal", "right"))*/hands_pause, 160, 70);
+        
+        ofDrawBitmapString(rippleHandler.size(), 300, 10);
+        ofDrawBitmapString(Ripple::life, 300, 30);
+        
+        ofDrawBitmapString(ofSignedNoise(ofVec2f(mouseX, mouseY)*0.001), 400, 10);
     }
     
 }
